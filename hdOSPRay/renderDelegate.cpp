@@ -38,7 +38,7 @@ TF_DEFINE_PUBLIC_TOKENS(HdOSPRayTokens, HDOSPRAY_TOKENS);
 
 const TfTokenVector HdOSPRayRenderDelegate::SUPPORTED_RPRIM_TYPES = {
     HdPrimTypeTokens->mesh,
-    HdPrimTypeTokens->basisCurves,
+    //HdPrimTypeTokens->basisCurves,
 };
 
 const TfTokenVector HdOSPRayRenderDelegate::SUPPORTED_SPRIM_TYPES = {
