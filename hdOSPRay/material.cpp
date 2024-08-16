@@ -510,8 +510,6 @@ HdOSPRayMaterial::_ProcessTextureNode(HdMaterialNode node,
             filename = path.GetResolvedPath();
         } else if (name == HdOSPRayMaterialTokens->scale) {
             texture.scale = value.Get<GfVec4f>();
-            texture.xfm_scale = GfVec2f(texture.scale[0], texture.scale[1]);
-            texture.hasXfm = true;
         } else if (name == HdOSPRayMaterialTokens->wrapS) {
         } else if (name == HdOSPRayMaterialTokens->wrapT) {
         } else if (name == HdOSPRayMaterialTokens->st) {
@@ -699,8 +697,8 @@ HdOSPRayMaterial::UpdatePrincipledMaterial(const std::string& rendererType)
                                           vec2f(-value.xfm_translation[0],
                                                 -value.xfm_translation[1]));
                     _ospMaterial.setParam(st_scale.c_str(),
-                                          vec2f(value.xfm_scale[0],
-                                                value.xfm_scale[1]));
+                                          vec2f(1.0f / value.xfm_scale[0],
+                                                1.0f / value.xfm_scale[1]));
                     _ospMaterial.setParam(st_rotation.c_str(),
                                           -value.xfm_rotation);
                 }
@@ -779,8 +777,8 @@ HdOSPRayMaterial::UpdateCarPaintMaterial()
                                       vec2f(-value.xfm_translation[0],
                                             -value.xfm_translation[1]));
                 _ospMaterial.setParam(st_scale.c_str(),
-                                      vec2f(value.xfm_scale[0],
-                                            value.xfm_scale[1]));
+                                      vec2f(1.0f / value.xfm_scale[0],
+                                            1.0f / value.xfm_scale[1]));
                 _ospMaterial.setParam(st_rotation.c_str(), -value.xfm_rotation);
             }
         }
@@ -834,8 +832,8 @@ HdOSPRayMaterial::UpdateLuminousMaterial()
                                       vec2f(-value.xfm_translation[0],
                                             -value.xfm_translation[1]));
                 _ospMaterial.setParam(st_scale.c_str(),
-                                      vec2f(value.xfm_scale[0],
-                                            value.xfm_scale[1]));
+                                      vec2f(1.0f / value.xfm_scale[0],
+                                            1.0f / value.xfm_scale[1]));
                 _ospMaterial.setParam(st_rotation.c_str(), -value.xfm_rotation);
             }
         }
@@ -873,8 +871,8 @@ HdOSPRayMaterial::UpdateGlassMaterial()
                                       vec2f(-value.xfm_translation[0],
                                             -value.xfm_translation[1]));
                 _ospMaterial.setParam(st_scale.c_str(),
-                                      vec2f(value.xfm_scale[0],
-                                            value.xfm_scale[1]));
+                                      vec2f(1.0f / value.xfm_scale[0],
+                                            1.0f / value.xfm_scale[1]));
                 _ospMaterial.setParam(st_rotation.c_str(), -value.xfm_rotation);
             }
         }
@@ -910,8 +908,8 @@ HdOSPRayMaterial::UpdateThinGlassMaterial()
                                       vec2f(-value.xfm_translation[0],
                                             -value.xfm_translation[1]));
                 _ospMaterial.setParam(st_scale.c_str(),
-                                      vec2f(value.xfm_scale[0],
-                                            value.xfm_scale[1]));
+                                      vec2f(1.0f / value.xfm_scale[0],
+                                            1.0f / value.xfm_scale[1]));
                 _ospMaterial.setParam(st_rotation.c_str(), -value.xfm_rotation);
             }
         }
