@@ -34,7 +34,8 @@ rad(float deg)
 
 HdOSPRayRenderPass::HdOSPRayRenderPass(
        HdRenderIndex* index, HdRprimCollection const& collection,
-       opp::Renderer renderer, std::shared_ptr<HdOSPRayRenderParam> renderParam)
+       opp::Renderer renderer, std::shared_ptr<HdOSPRayRenderParam> renderParam,
+       const std::shared_ptr<float>& progress)
     : HdRenderPass(index, collection)
     , _pendingResetImage(false)
     , _pendingModelUpdate(true)
@@ -54,6 +55,7 @@ HdOSPRayRenderPass::HdOSPRayRenderPass(
     , _primIdBuffer(SdfPath::EmptyPath())
     , _elementIdBuffer(SdfPath::EmptyPath())
     , _instIdBuffer(SdfPath::EmptyPath())
+    , _progress(progress)
 {
     _world = opp::World();
     _world.setParam("dynamicScene", true);
@@ -418,6 +420,11 @@ HdOSPRayRenderPass::_Execute(HdRenderPassStateSharedPtr const& renderPassState,
             ospRenderBuffer->SetConverged(true);
         }
     }
+
+    if (_progress) {
+        *_progress = (float)_numSamplesAccumulated / (float)_samplesToConvergence;
+    }
+
     TF_DEBUG_MSG(OSP, "ospRP::Execute done\n");
 }
 

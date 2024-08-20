@@ -228,6 +228,10 @@ public:
     virtual HdRenderSettingDescriptorList
     GetRenderSettingDescriptors() const override;
 
+    /// Returns dictionary of render statistics.
+    /// Contains render progress at key "progress".
+    virtual VtDictionary GetRenderStats() const override;
+
 private:
     static const TfTokenVector SUPPORTED_RPRIM_TYPES;
     static const TfTokenVector SUPPORTED_SPRIM_TYPES;
@@ -256,4 +260,5 @@ private:
     // A shared HdOSPRayRenderParam object that stores top-level OSPRay state;
     // passed to prims during Sync().
     std::shared_ptr<HdOSPRayRenderParam> _renderParam;
+    std::shared_ptr<float> _progress = std::make_shared<float>(0.0f);
 };

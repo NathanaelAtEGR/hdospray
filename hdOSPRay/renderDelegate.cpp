@@ -279,7 +279,7 @@ HdOSPRayRenderDelegate::CreateRenderPass(HdRenderIndex* index,
                                          HdRprimCollection const& collection)
 {
     return HdRenderPassSharedPtr(
-           new HdOSPRayRenderPass(index, collection, _renderer, _renderParam));
+           new HdOSPRayRenderPass(index, collection, _renderer, _renderParam, _progress));
 }
 
 #if HD_API_VERSION < 36
@@ -411,4 +411,12 @@ HdRenderSettingDescriptorList
 HdOSPRayRenderDelegate::GetRenderSettingDescriptors() const
 {
     return _settingDescriptors;
+}
+
+VtDictionary
+HdOSPRayRenderDelegate::GetRenderStats() const
+{
+    VtDictionary dict;
+    dict.SetValueAtPath("progress", VtValue(*_progress.get()));
+    return dict;
 }

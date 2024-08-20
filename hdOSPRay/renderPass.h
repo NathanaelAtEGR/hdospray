@@ -33,7 +33,8 @@ public:
     HdOSPRayRenderPass(HdRenderIndex* index,
                        HdRprimCollection const& collection,
                        opp::Renderer renderer,
-                       std::shared_ptr<HdOSPRayRenderParam> renderParam);
+                       std::shared_ptr<HdOSPRayRenderParam> renderParam,
+                       const std::shared_ptr<float>& progress);
 
     virtual ~HdOSPRayRenderPass();
 
@@ -245,4 +246,6 @@ private:
 
     float _aoRadius { HDOSPRAY_DEFAULT_AO_RADIUS };
     float _aoIntensity { HDOSPRAY_DEFAULT_AO_INTENSITY };
+
+    std::shared_ptr<float> _progress;
 };
