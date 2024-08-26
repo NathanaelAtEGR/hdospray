@@ -150,6 +150,8 @@ private:
     void _UpdateFrameBuffer(bool useDenoiser,
                             HdRenderPassStateSharedPtr const& renderPassState);
 
+    void _UpdateProgress(bool pAddFrameProgress);
+
     void _ConvertDepthToClipSpace(HdRenderPassStateSharedPtr const& renderPassState,
                                   float* depth);
 

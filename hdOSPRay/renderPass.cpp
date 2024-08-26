@@ -280,8 +280,11 @@ HdOSPRayRenderPass::_Execute(HdRenderPassStateSharedPtr const& renderPassState,
     } else if (_currentFrame.isValid()) { // nothing dirty, progressively
                                           // rendering next frame.
         // return until frame is ready
-        if (!_currentFrame.osprayFrame.isReady())
+        if (!_currentFrame.osprayFrame.isReady()) {
+            _UpdateProgress(true);
             return;
+        }
+
         // progressively refined image is ready for display
         _currentFrame.osprayFrame.wait();
 
@@ -421,9 +424,7 @@ HdOSPRayRenderPass::_Execute(HdRenderPassStateSharedPtr const& renderPassState,
         }
     }
 
-    if (_progress) {
-        *_progress = (float)_numSamplesAccumulated / (float)_samplesToConvergence;
-    }
+    _UpdateProgress(false);
 
     TF_DEBUG_MSG(OSP, "ospRP::Execute done\n");
 }
@@ -1017,6 +1018,17 @@ HdOSPRayRenderPass::_UpdateFrameBuffer(
 
     _frameBufferDirty = false;
     _interactiveFrameBufferDirty = false;
+}
+
+void
+HdOSPRayRenderPass::_UpdateProgress(bool pAddFrameProgress)
+{
+    if (_progress) {
+        float frameProgess
+               = pAddFrameProgress ? _currentFrame.osprayFrame.progress() : .0f;
+        *_progress = ((float)_numSamplesAccumulated + frameProgess * _spp)
+               / (float)_samplesToConvergence;
+    }
 }
 
 void
