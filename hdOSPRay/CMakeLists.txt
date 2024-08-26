@@ -42,27 +42,47 @@ else()
 endif()
 
 add_library(hdOSPRay SHARED
+    api.h
     config.cpp
+    config.h
     discovery.cpp
     parser.cpp
     instancer.cpp
+    instancer.h
     mesh.cpp
+    mesh.h
     camera.cpp
+    camera.h
     basisCurves.cpp
+    basisCurves.h
     material.cpp
+    material.h
     rendererPlugin.cpp
+    rendererPlugin.h
     renderDelegate.cpp
+    renderDelegate.h
     renderPass.cpp
+    renderPass.h
     renderBuffer.cpp
+    renderBuffer.h
     sampler.cpp
+    sampler.h
     texture.cpp
+    texture.h
     lights/light.cpp
+    lights/light.h
     lights/diskLight.cpp
+    lights/diskLight.h
     lights/distantLight.cpp
+    lights/distantLight.h
     lights/domeLight.cpp
+    lights/domeLight.h
     lights/rectLight.cpp
+    lights/rectLight.h
     lights/sphereLight.cpp
+    lights/sphereLight.h
     lights/cylinderLight.cpp
+    lights/cylinderLight.h
     context.h
     renderParam.h
     plugInfo.json
