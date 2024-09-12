@@ -26,7 +26,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
     (minContribution)(maxContribution)(interactiveTargetFPS)                   \
     (useTextureGammaCorrection)(tmp_exposure)(tmp_enabled)(tmp_contrast)       \
     (tmp_shoulder)(tmp_midIn)(tmp_midOut)(tmp_hdrMax)(tmp_acesColor)           \
-    (shadowCatcherPlane)(geometryLights)
+    (shadowCatcherPlane)(geometryLights)(architecturalCamera)
 
 TF_DECLARE_PUBLIC_TOKENS(HdOSPRayRenderSettingsTokens,
                          HDOSPRAY_RENDER_SETTINGS_TOKENS);

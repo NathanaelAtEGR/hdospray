@@ -145,6 +145,9 @@ public:
     ///  Geometry Lights
     bool geometryLights { false };
 
+    ///  Architectural Camera
+    bool architecturalCamera { false };
+
     ///  OSPRay device
     ///
     /// "cpu" or "gpu" device

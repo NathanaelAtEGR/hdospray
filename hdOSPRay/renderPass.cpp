@@ -225,8 +225,9 @@ HdOSPRayRenderPass::_Execute(HdRenderPassStateSharedPtr const& renderPassState,
            = renderPassState->GetWorldToViewMatrix().GetInverse();
     auto inverseProjMatrix
            = renderPassState->GetProjectionMatrix().GetInverse();
-    bool cameraDirty = (inverseViewMatrix != _inverseViewMatrix
-                        || inverseProjMatrix != _inverseProjMatrix);
+    bool cameraDirty = _pendingCameraUpdate
+           || (inverseViewMatrix != _inverseViewMatrix)
+           || (inverseProjMatrix != _inverseProjMatrix);
 
     // dirty scene mesh representation
     int currentModelVersion = _renderParam->GetModelVersion();
@@ -544,6 +545,12 @@ HdOSPRayRenderPass::_ProcessCamera(
     origin = _inverseViewMatrix.Transform(origin);
     dir = _inverseViewMatrix.TransformDir(dir).GetNormalized();
     up = _inverseViewMatrix.TransformDir(up).GetNormalized();
+    if (_cameraProjection == HdCamera::Projection::Perspective
+        && _architecturalCamera) {
+        // as we don't know the stage's up-axis here we
+        // just use the direction with the largest value
+        up = (abs(up[1]) > abs(up[2])) ? GfVec3f(0, 1, 0) : GfVec3f(0, 0, 1);
+    }
 
     _camera.setParam("position", vec3f(origin[0], origin[1], origin[2]));
     _camera.setParam("direction", vec3f(dir[0], dir[1], dir[2]));
@@ -582,9 +589,11 @@ HdOSPRayRenderPass::_ProcessCamera(
             _camera.setParam("focusDistance", 1.f);
         }
         _camera.setParam("fovy", fov);
+        _camera.setParam("architectural", _architecturalCamera);
         TF_DEBUG_MSG(OSP, "focusDistance: %f\n", focusDistance);
         TF_DEBUG_MSG(OSP, "apertureRadius: %f\n", aperture);
         TF_DEBUG_MSG(OSP, "fovy: %f\n", fov);
+        TF_DEBUG_MSG(OSP, "architectural: %d\n", _architecturalCamera);
     }
     else { // orthographic
         float height = camera ? camera->GetVerticalAperture() : 100.0f;
@@ -593,6 +602,7 @@ HdOSPRayRenderPass::_ProcessCamera(
     }
 
     _camera.commit();
+    _pendingCameraUpdate = false;
 }
 
 void
@@ -739,6 +749,15 @@ HdOSPRayRenderPass::_ProcessSettings()
     if (ambientLight != _ambientLight) {
         _ambientLight = ambientLight;
         _pendingLightUpdate = true;
+        _pendingResetImage = true;
+    }
+
+    bool architecturalCamera = renderDelegate->GetRenderSetting<bool>(
+           HdOSPRayRenderSettingsTokens->architecturalCamera,
+           _architecturalCamera);
+    if (architecturalCamera != _architecturalCamera) {
+        _architecturalCamera = architecturalCamera;
+        _pendingCameraUpdate = true;
         _pendingResetImage = true;
     }
 }

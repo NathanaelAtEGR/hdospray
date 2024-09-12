@@ -160,6 +160,7 @@ private:
     bool _frameBufferDirty { true };
     bool _denoiserDirty { true };
     bool _aovDirty { true };
+    bool _pendingCameraUpdate { true };
     bool _pendingModelUpdate { true };
     bool _pendingLightUpdate { true };
     bool _pendingSettingsUpdate { true };
@@ -211,6 +212,7 @@ private:
 
     opp::Camera _camera;
     HdCamera::Projection _cameraProjection { HdCamera::Projection::Perspective };
+    bool _architecturalCamera { false };
 
     // camera space to world space
     GfMatrix4d _inverseViewMatrix;
