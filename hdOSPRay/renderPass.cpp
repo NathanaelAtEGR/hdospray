@@ -392,7 +392,7 @@ HdOSPRayRenderPass::_Execute(HdRenderPassStateSharedPtr const& renderPassState,
         // cancel rendered frame and display old frame if valid
         _renderer.setParam("minContribution", 0.1f);
         _renderer.setParam("maxContribution", 3.0f);
-        _renderer.setParam("maxPathLength", min(4, _maxDepth));
+        _renderer.setParam("maxPathLength", min(5, _maxDepth));
         _renderer.setParam("aoSamples", (cameraDirty ? 0 : _aoSamples));
         _rendererDirty = true;
         _interactiveScaled = true;
