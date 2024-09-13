@@ -89,7 +89,12 @@ private:
                                     const VtVec3fArray& colors, bool refined,
                                     bool useQuads);
 
-    const HdOSPRayMaterial* _GetAssignedMaterial(const HdRenderIndex& renderIndex) const;
+    std::vector<opp::Material>
+    _ComputeMaterials(const HdRenderIndex& renderIndex) const;
+    std::vector<opp::Material>
+    _ComputeSubsetMaterials(const HdRenderIndex& renderIndex) const;
+    opp::Material _GetMeshMaterialOrCreateDefaultMaterial(
+           const HdRenderIndex& renderIndex) const;
 
     ///  \param meshUtil
     ///  \param useQuads

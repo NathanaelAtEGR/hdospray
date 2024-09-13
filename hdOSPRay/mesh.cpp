@@ -316,8 +316,6 @@ HdOSPRayMesh::_PopulateOSPMesh(HdSceneDelegate* sceneDelegate,
                                            HdOSPRayTokens->st)) {
         newMesh = true;
 
-        const HdOSPRayMaterial* material = _GetAssignedMaterial(renderIndex);
-
         if (!_refined) {
             if (useQuads) {
                 _meshUtil->ComputeQuadIndices(&_quadIndices,
@@ -331,7 +329,7 @@ HdOSPRayMesh::_PopulateOSPMesh(HdSceneDelegate* sceneDelegate,
                 || _points.empty())
                 return;
 
-            if (!material && !_colors.empty()) {
+            if (!_colors.empty()) {
                 _ComputePrimvars<VtVec3fArray>(
                        *_meshUtil, useQuads, _colors, _computedColors,
                        _colorsPrimVarName, _colorsInterpolation);
@@ -370,8 +368,12 @@ HdOSPRayMesh::_PopulateOSPMesh(HdSceneDelegate* sceneDelegate,
             }
         }
 
+        // must be called after ComputeQuad/TriangleIndices()
+        // for correct subset materials
+        auto materials = _ComputeMaterials(renderIndex);
+
         // use vertex colors (displayColor) only as fallback in case no material is assigned
-        if (!material && !_colors.empty()) {
+        if (materials.empty() && !_colors.empty()) {
             // TODO: add back in opacities
             VtVec3fArray& colors = _colors;
             if (!_computedColors.empty())
@@ -405,23 +407,23 @@ HdOSPRayMesh::_PopulateOSPMesh(HdSceneDelegate* sceneDelegate,
 
         _ospMesh.commit();
 
-        opp::Material ospMaterial = nullptr;
-
-        if (material && material->GetOSPRayMaterial()) {
-            ospMaterial = material->GetOSPRayMaterial();
-        } else {
-            ospMaterial = HdOSPRayMaterial::CreateDefaultMaterial(_singleColor);
-        }
-
         // Create OSPRay Mesh
         if (_geometricModel)
             delete _geometricModel;
         _geometricModel = new opp::GeometricModel(_ospMesh);
 
-        _geometricModel->setParam("material", ospMaterial);
+        if (materials.empty()) { // no material assigned - use default material
+            _geometricModel->setParam(
+                   "material",
+                   HdOSPRayMaterial::CreateDefaultMaterial(_singleColor));
+        } else if (materials.size() == 1) { // single material for whole mesh
+            _geometricModel->setParam("material", materials[0]);
+        } else { // materials per face from subsets
+            _geometricModel->setParam("material", opp::CopiedData(materials));
+        }
         _geometricModel->setParam("id", (unsigned int)GetPrimId());
         _ospMesh.commit();
-        if (!material && !_computedColors.empty()) {
+        if (materials.empty() && !_computedColors.empty()) {
             if (_colorsInterpolation == HdInterpolationUniform) {
                 std::vector<vec4f> colors(_computedColors.size());
                 for (int i = 0; i < _computedColors.size(); i++) {
@@ -709,24 +711,98 @@ HdOSPRayMesh::_CreateOSPRaySubdivMesh()
     return mesh;
 }
 
-const HdOSPRayMaterial*
-HdOSPRayMesh::_GetAssignedMaterial(const HdRenderIndex& renderIndex) const
+std::vector<opp::Material>
+HdOSPRayMesh::_ComputeMaterials(const HdRenderIndex& renderIndex) const
 {
-    const HdOSPRayMaterial* subsetMaterial = nullptr;
+    auto subsetMaterials = _ComputeSubsetMaterials(renderIndex);
+    if (!subsetMaterials.empty())
+        return subsetMaterials;
 
-    for (const auto& subset : _topology.GetGeomSubsets()) {
-        if (!TF_VERIFY(subset.type == HdGeomSubset::TypeFaceSet))
-            continue;
-
-        const HdOSPRayMaterial* material
-               = static_cast<const HdOSPRayMaterial*>(renderIndex.GetSprim(
-                      HdPrimTypeTokens->material, subset.materialId));
-        subsetMaterial = material;
+    HdOSPRayMaterial* material = static_cast<HdOSPRayMaterial*>(
+        renderIndex.GetSprim(HdPrimTypeTokens->material, GetMaterialId()));
+    if (material) {
+        return { material->GetOSPRayMaterial() };
     }
 
-    if (subsetMaterial)
-        return subsetMaterial;
-    else
-        return static_cast<const HdOSPRayMaterial*>(renderIndex.GetSprim(
-               HdPrimTypeTokens->material, GetMaterialId()));
+    return {}; // no material assigned
+}
+
+std::vector<opp::Material>
+HdOSPRayMesh::_ComputeSubsetMaterials(
+       const HdRenderIndex& renderIndex) const
+{
+    const auto& subsets = _topology.GetGeomSubsets();
+    if (subsets.empty())
+        return {};
+
+    // full subset material support for simple triangle meshes only
+    if (!_refined && _triangulatedIndices.size() == _topology.GetNumFaces()) {
+        std::vector<ospray::cpp::Material> perFaceMaterials;
+        perFaceMaterials.resize(_topology.GetNumFaces());
+
+        bool hasSubsetMaterials = false;
+        for (const auto& subset : subsets) {
+            if (!TF_VERIFY(subset.type == HdGeomSubset::TypeFaceSet))
+                continue;
+
+            HdOSPRayMaterial* material
+                   = static_cast<HdOSPRayMaterial*>(renderIndex.GetSprim(
+                          HdPrimTypeTokens->material, subset.materialId));
+            if (!material)
+                continue;
+
+            if (auto osprayMaterial = material->GetOSPRayMaterial()) {
+                hasSubsetMaterials = true;
+                for (const auto faceIdx : subset.indices) {
+                    perFaceMaterials[faceIdx] = osprayMaterial;
+                }
+            }
+        }
+
+        if (hasSubsetMaterials) {
+            // there may still be some faces without material,
+            // use mesh material in this case
+            opp::Material meshMaterial;
+            for (auto& faceMaterial : perFaceMaterials) {
+                if (!faceMaterial) {
+                    if (!meshMaterial) {
+                        meshMaterial = _GetMeshMaterialOrCreateDefaultMaterial(
+                               renderIndex);
+                    }
+                    faceMaterial = meshMaterial;
+                }
+            }
+            return perFaceMaterials;
+        }
+
+    } else {
+        // full subset support not yet implemented for this kind of mesh
+        // just use first found subset material
+        for (const auto& subset : subsets) {
+            if (!TF_VERIFY(subset.type == HdGeomSubset::TypeFaceSet))
+                continue;
+
+            const HdOSPRayMaterial* material
+                   = static_cast<const HdOSPRayMaterial*>(renderIndex.GetSprim(
+                          HdPrimTypeTokens->material, subset.materialId));
+            if (material) {
+                return { material->GetOSPRayMaterial() };
+            }
+        }
+    }
+
+    return {}; // no subsets with materials
+}
+
+opp::Material
+HdOSPRayMesh::_GetMeshMaterialOrCreateDefaultMaterial(
+       const HdRenderIndex& renderIndex) const
+{
+    HdOSPRayMaterial* material = static_cast<HdOSPRayMaterial*>(
+           renderIndex.GetSprim(HdPrimTypeTokens->material, GetMaterialId()));
+    if (material) {
+        return material->GetOSPRayMaterial();
+    } else {
+        return HdOSPRayMaterial::CreateDefaultMaterial(_singleColor);
+    }
 }
