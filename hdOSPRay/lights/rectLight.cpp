@@ -75,9 +75,10 @@ HdOSPRayRectLight::_PrepareOSPLight()
     GfVec3f usd_rectLightCenter(0, 0, 0);
     GfVec3f usd_rectLightDir(0, 0, -1);
 
-    usd_rectLightCenter = _transform.Transform(usd_rectLightCenter);
-    usd_rectLightDir
-           = _transform.Transform(usd_rectLightDir) - usd_rectLightCenter;
+    usd_rectLightCenter = static_cast<GfVec3f>(
+        _transform.Transform(usd_rectLightCenter));
+    usd_rectLightDir = static_cast<GfVec3f>(
+           _transform.Transform(usd_rectLightDir) - usd_rectLightCenter);
     usd_rectLightDir /= usd_rectLightDir.GetLength();
 
     // OSPRay quad light

@@ -47,7 +47,7 @@ HdOSPRayDistantLight::_PrepareOSPLight()
                ? OSP_INTENSITY_QUANTITY_IRRADIANCE
                : OSP_INTENSITY_QUANTITY_RADIANCE;
     }
-    GfVec3f direction(0, 0, -1);
+    GfVec3d direction(0, 0, -1);
 
     // only apply the rotational part of the transformation
     GfMatrix3d rotTransform = _transform.ExtractRotationMatrix();

@@ -56,7 +56,7 @@ HdOSPRaySphereLight::_PrepareOSPLight()
                : OSP_INTENSITY_QUANTITY_RADIANCE;
     }
 
-    GfVec3f position(0, 0, 0);
+    GfVec3d position(0, 0, 0);
     position = _transform.Transform(position);
     // Note: we are currently only considering translations
     // We could also consider scaling but is is not clear what to do

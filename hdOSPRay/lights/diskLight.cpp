@@ -54,12 +54,12 @@ HdOSPRayDiskLight::_PrepareOSPLight()
     }
 
     // the initial center of the disk
-    GfVec3f position(0, 0, 0);
+    GfVec3d position(0, 0, 0);
     // positing to determine the direction of the spotlight
-    GfVec3f position1(0, 0, -1);
+    GfVec3d position1(0, 0, -1);
     // position to dertermine the scale of the original
     // radius due to transformations
-    GfVec3f position2(1, 0, 0);
+    GfVec3d position2(1, 0, 0);
 
     // transforming the disk light to its location
     // in the scene (including translation and scaling)
@@ -69,7 +69,7 @@ HdOSPRayDiskLight::_PrepareOSPLight()
 
     float radiusScale = (position2 - position).GetLength();
 
-    GfVec3f direction = position1 - position;
+    GfVec3d direction = position1 - position;
     direction.Normalize();
 
     float radius = _radius * radiusScale;

@@ -538,9 +538,9 @@ HdOSPRayRenderPass::_ProcessCamera(
     _camera.setParam("aspect", aspect);
     TF_DEBUG_MSG(OSP, "aspect: %f\n", aspect);
 
-    GfVec3f origin = GfVec3f(0, 0, 0);
-    GfVec3f dir = GfVec3f(0, 0, -1);
-    GfVec3f up = GfVec3f(0, 1, 0);
+    GfVec3d origin = GfVec3d(0, 0, 0);
+    GfVec3d dir = GfVec3d(0, 0, -1);
+    GfVec3d up = GfVec3d(0, 1, 0);
     dir = _inverseProjMatrix.Transform(dir);
     origin = _inverseViewMatrix.Transform(origin);
     dir = _inverseViewMatrix.TransformDir(dir).GetNormalized();
@@ -549,7 +549,7 @@ HdOSPRayRenderPass::_ProcessCamera(
         && _architecturalCamera) {
         // as we don't know the stage's up-axis here we
         // just use the direction with the largest value
-        up = (abs(up[1]) > abs(up[2])) ? GfVec3f(0, 1, 0) : GfVec3f(0, 0, 1);
+        up = (abs(up[1]) > abs(up[2])) ? GfVec3d(0, 1, 0) : GfVec3d(0, 0, 1);
     }
 
     _camera.setParam("position", vec3f(origin[0], origin[1], origin[2]));
@@ -608,20 +608,6 @@ HdOSPRayRenderPass::_ProcessCamera(
 void
 HdOSPRayRenderPass::_ProcessLights()
 {
-    GfVec3f origin = GfVec3f(0, 0, 0);
-    GfVec3f dir = GfVec3f(0, 0, -1);
-    GfVec3f up = GfVec3f(0, 1, 0);
-    dir = _inverseProjMatrix.Transform(dir);
-    origin = _inverseViewMatrix.Transform(origin);
-    dir = _inverseViewMatrix.TransformDir(dir).GetNormalized();
-    up = _inverseViewMatrix.TransformDir(up).GetNormalized();
-    GfVec3f up_light(up[0], up[1], up[2]);
-    GfVec3f dir_light(dir[0], dir[1], dir[2]);
-    if (_staticDirectionalLights) {
-        up_light = { 0.f, 1.f, 0.f };
-        dir_light = { -.1f, -.1f, -.8f };
-    }
-    GfVec3f right_light = GfCross(dir, up);
     std::vector<opp::Light> lights;
 
     // push scene lights
@@ -1058,27 +1044,27 @@ HdOSPRayRenderPass::_ConvertDepthToClipSpace(
     const auto projMatrix = renderPassState->GetProjectionMatrix();
     GfMatrix4d viewProjMatrix = viewMatrix * projMatrix;
     GfMatrix4d inverseViewProjMatrix = _inverseProjMatrix * _inverseViewMatrix;
-    const GfVec3f origin = _inverseViewMatrix.Transform(GfVec3f(0, 0, 0));
+    const GfVec3d origin = _inverseViewMatrix.Transform(GfVec3d(0, 0, 0));
 
-    const float w = _currentFrame.width;
-    const float h = _currentFrame.height;
+    const double w = _currentFrame.width;
+    const double h = _currentFrame.height;
     if (_cameraProjection == HdCamera::Projection::Orthographic) {
-        const GfVec3f nearPlaneCenter
-               = inverseViewProjMatrix.Transform(GfVec3f(0, 0, -1.f));
-        GfVec3f dir = nearPlaneCenter - origin;
+        const GfVec3d nearPlaneCenter
+               = inverseViewProjMatrix.Transform(GfVec3d(0, 0, -1.0));
+        GfVec3d dir = nearPlaneCenter - origin;
         const float dNear = dir.Normalize();
 
         tbb::parallel_for(0, (int)h, [&](int iy) {
             tbb::parallel_for(0, (int)w, [&](int ix) {
                 const float x = ix;
                 const float y = iy;
-                const GfVec3f pos(2.f * (x / w) - 1.f, 2.f * (y / h) - 1.f,
-                                  -1.f);
-                GfVec3f posNear = inverseViewProjMatrix.Transform(pos);
+                const GfVec3d pos(2.0 * (x / w) - 1.0, 2.0 * (y / h) - 1.0,
+                    -1.0);
+                GfVec3d posNear = inverseViewProjMatrix.Transform(pos);
                 float& d = depth[static_cast<int>(y * w + x)];
-                GfVec3f hit = posNear + dir * (d - dNear);
+                GfVec3d hit = posNear + dir * (d - dNear);
                 hit = viewProjMatrix.Transform(hit);
-                d = (hit[2] + 1.f) / 2.f;
+                d = static_cast<float>((hit[2] + 1.0) / 2.0);
                 if (isnan(d))
                     d = 1.f;
             });
@@ -1089,14 +1075,14 @@ HdOSPRayRenderPass::_ConvertDepthToClipSpace(
             tbb::parallel_for(0, (int)w, [&](int ix) {
                 const float x = ix;
                 const float y = iy;
-                const GfVec3f pos(2.f * (x / w) - 1.f, 2.f * (y / h) - 1.f,
-                                  -1.f);
-                GfVec3f dir = (inverseViewProjMatrix.Transform(pos) - origin)
+                const GfVec3d pos(2.0 * (x / w) - 1.0, 2.0 * (y / h) - 1.0,
+                                  -1.0);
+                GfVec3d dir = (inverseViewProjMatrix.Transform(pos) - origin)
                                      .GetNormalized();
                 float& d = depth[static_cast<int>(y * w + x)];
-                GfVec3f hit = origin + dir * d;
+                GfVec3d hit = origin + dir * d;
                 hit = viewProjMatrix.Transform(hit);
-                d = (hit[2] + 1.f) / 2.f;
+                d = static_cast<float>((hit[2] + 1.0) / 2.0);
                 if (isnan(d))
                     d = 1.f;
             });

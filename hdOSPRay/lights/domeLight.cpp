@@ -49,8 +49,8 @@ HdOSPRayDomeLight::_LightSpecificSync(HdSceneDelegate* sceneDelegate,
 void
 HdOSPRayDomeLight::_PrepareOSPLight()
 {
-    GfVec3f upDirection(0.0, 1.0, 0.0);
-    GfVec3f centerDirection(0.0, 0.0, 1.0);
+    GfVec3d upDirection(0.0, 1.0, 0.0);
+    GfVec3d centerDirection(0.0, 0.0, 1.0);
 
     upDirection = _transform.Transform(upDirection);
     centerDirection = _transform.Transform(centerDirection);
